@@ -163,18 +163,15 @@ def join_and_correct(df_rbk: pl.DataFrame, df_rpb: pl.DataFrame) -> pl.DataFrame
         (pl.col("ref") != pl.col("majority_consensus_right")).cast(pl.Int8).alias("mismatch")
     )
 
-    # Add a column with the value of the majority consensus
-    # df_both = df_both.with_columns(
-    # 	pl.when((pl.col("mismatch") == 1) & (pl.col("strand_bias") == 1) & (pl.col("problems_right") == 0)).then(
-    # 	    pl.col("majority_consensus_right"))
-    # 	.otherwise(pl.col("ref")).alias("final_consensus")
-    # )
-
+    # Correct consensus
     df_both = df_both.with_columns(
         pl.when((pl.col("mismatch") == 1) & (pl.col("problems") != 0) & (pl.col("problems_right") == 0)).then(
             pl.col("majority_consensus_right"))
+        .when((pl.col("mismatch") == 1) & (pl.col("problems") != 0) & (pl.col("problems_right") != 0)).then(
+            pl.lit("N"))
         .otherwise(pl.col("ref")).alias("final_consensus")
     )
+
 
     # Add info
     df_both = df_both.with_columns(
